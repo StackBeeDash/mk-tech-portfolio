@@ -4,33 +4,24 @@ Technical portfolio by **Masato Kikukawa** — showcasing AI-driven development,
 
 ## About
 
-This repository demonstrates technical expertise extracted from real-world private projects, covering:
+This repository demonstrates technical expertise extracted from real-world private projects, covering full-stack engineering, AI-driven development, and CTO-level architectural decision-making.
 
-- **AI-Driven Development** — Claude Code workflows, multi-agent systems, MCP integrations
-- **Cloud Architecture** — GCP-based data pipelines, serverless patterns, infrastructure design
-- **Training & Education** — Hands-on labs and AI-powered course content generation
-- **Claude Code for Non-Engineers** — Business automation and adoption guides for non-technical teams
+## Portfolio
 
-## Structure
-
-```
-01-ai-driven-dev/            # AI-driven development patterns
-├── claude-code-workflow/    # Claude Code project setup & governance
-├── multi-agent-system/      # Multi-agent decision support system
-└── mcp-integration/         # Custom MCP server implementations
-
-02-cloud-architecture/       # Cloud architecture & data pipelines
-├── data-pipeline/           # Cloud Run Jobs batch processing
-└── fullstack-saas/          # Next.js + FastAPI + Supabase SaaS pattern
-
-03-training-content/         # Technical training materials
-├── hands-on-lab/            # Hands-on lab samples
-└── course-generator/        # AI-powered course content generation
-
-04-claude-for-non-engineers/ # Claude Code for non-technical users
-├── business-automation/     # Business process automation examples
-└── getting-started/         # Adoption guide & tutorials
-```
+| # | Theme | Directory | Description |
+|---|-------|-----------|-------------|
+| 01 | AI-Driven Development | [`01-ai-driven-dev/`](01-ai-driven-dev/) | Claude Code workflows, multi-agent systems, MCP integrations |
+| 02 | Cloud Architecture | [`02-cloud-architecture/`](02-cloud-architecture/) | GCP Cloud Run Jobs, serverless data pipelines |
+| 03 | Training Content | [`03-training-content/`](03-training-content/) | Hands-on labs & AI-powered course generation |
+| 04 | Claude for Non-Engineers | [`04-claude-for-non-engineers/`](04-claude-for-non-engineers/) | Business automation & adoption guides |
+| 05 | Domain-Driven Design | [`05-ddd/`](05-ddd/) | Strategic/tactical DDD patterns in practice |
+| 06 | E2E Testing | [`06-e2e-testing/`](06-e2e-testing/) | Playwright test automation |
+| 07 | Figma to Code | [`07-figma-to-code/`](07-figma-to-code/) | Figma MCP integration & UI development workflow |
+| 08 | CI/CD Pipeline | [`08-ci-cd-pipeline/`](08-ci-cd-pipeline/) | GitHub Actions, Docker, DevOps practices |
+| 09 | Monorepo Design | [`09-monorepo-design/`](09-monorepo-design/) | Turborepo/pnpm workspace architecture |
+| 10 | DB Migration | [`10-db-migration/`](10-db-migration/) | Database schema design & migration strategies |
+| 11 | Security | [`11-security/`](11-security/) | Authentication, authorization, API key management |
+| 12 | API Design | [`12-api-design/`](12-api-design/) | REST / GraphQL API design patterns |
 
 ## Tech Stack
 
@@ -41,7 +32,9 @@ This repository demonstrates technical expertise extracted from real-world priva
 | Backend | FastAPI, Python, Node.js |
 | Cloud | GCP (Cloud Run Jobs, Cloud Storage), Supabase |
 | Desktop | Tauri (Rust) |
-| DevOps | GitHub Actions, Docker |
+| Testing | Playwright, Vitest |
+| Design | Figma, Figma MCP |
+| DevOps | GitHub Actions, Docker, Turborepo |
 
 ## Author
 

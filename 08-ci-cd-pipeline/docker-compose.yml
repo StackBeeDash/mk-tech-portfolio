@@ -1,0 +1,67 @@
+# ローカル開発環境
+#
+# 使い方: docker compose up -d
+#
+# Why docker-compose:
+# - 開発環境の構築を1コマンドで完結させる
+# - チームメンバー間で環境差異をなくす
+# - DB / Redis をローカルで手軽に立ち上げる
+
+services:
+  # アプリケーション
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder  # 開発時はビルダーステージを使用
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://devuser:devpass@db:5432/devdb
+      - REDIS_URL=redis://redis:6379
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+    volumes:
+      - .:/app
+      - /app/node_modules  # node_modules はコンテナ内のものを使用
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: ["pnpm", "run", "dev"]
+
+  # PostgreSQL データベース
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: devuser
+      POSTGRES_PASSWORD: devpass  # NOTE: 開発環境用のダミーパスワード
+      POSTGRES_DB: devdb
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devuser -d devdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis キャッシュ
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    command: ["redis-server", "--appendonly", "yes"]
+
+volumes:
+  db_data:
+  redis_data:

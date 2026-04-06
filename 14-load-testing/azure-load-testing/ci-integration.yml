@@ -1,0 +1,140 @@
+# GitHub Actions: Azure Load Testing CI Integration
+# PR 作成時に自動で負荷テストを実行し、結果を PR コメントに投稿する
+
+name: Load Test
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "14-load-testing/**"
+  workflow_dispatch:
+    inputs:
+      engine_instances:
+        description: "Number of engine instances"
+        required: false
+        default: "1"
+        type: choice
+        options:
+          - "1"
+          - "3"
+          - "5"
+
+permissions:
+  id-token: write    # OIDC (Workload Identity Federation)
+  contents: read
+  pull-requests: write  # PR コメント投稿用
+
+env:
+  AZURE_RESOURCE_GROUP: rg-loadtest
+  AZURE_LOAD_TEST_RESOURCE: lt-api-staging
+  LOAD_TEST_CONFIG_FILE: 14-load-testing/azure-load-testing/load-test-config.yaml
+
+jobs:
+  load-test:
+    name: Run Load Test
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Run Azure Load Test
+        id: load-test
+        uses: azure/load-testing@v1
+        with:
+          loadTestConfigFile: ${{ env.LOAD_TEST_CONFIG_FILE }}
+          resourceGroup: ${{ env.AZURE_RESOURCE_GROUP }}
+          loadTestResource: ${{ env.AZURE_LOAD_TEST_RESOURCE }}
+          env: |
+            [
+              { "name": "target.host", "value": "staging-api.example.com" },
+              { "name": "target.port", "value": "443" },
+              { "name": "target.protocol", "value": "https" }
+            ]
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: load-test-results
+          path: ${{ github.workspace }}/loadTest/
+
+      - name: Generate result summary
+        if: always()
+        id: summary
+        run: |
+          RESULT_DIR="${{ github.workspace }}/loadTest"
+
+          if [ -f "$RESULT_DIR/results.csv" ]; then
+            pip install pandas
+            python 14-load-testing/scripts/analyze-results.py \
+              "$RESULT_DIR/results.csv" \
+              --output "$RESULT_DIR/report.md" \
+              --p95-threshold 500 \
+              --p99-threshold 1000 \
+              --error-threshold 1.0
+
+            REPORT=$(cat "$RESULT_DIR/report.md")
+            echo "report<<EOF" >> $GITHUB_OUTPUT
+            echo "$REPORT" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "report=No results file found." >> $GITHUB_OUTPUT
+          fi
+
+      - name: Post results to PR
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `## Load Test Results
+
+            **Status**: ${{ steps.load-test.outcome == 'success' && 'PASSED' || 'FAILED' }}
+
+            ${{ steps.summary.outputs.report }}
+
+            ---
+            *Test executed by [Azure Load Testing](https://portal.azure.com/) via GitHub Actions*
+            `;
+
+            // 既存コメントがあれば更新、なければ新規作成
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const marker = '## Load Test Results';
+            const existing = comments.find(c => c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body,
+              });
+            }
+
+      - name: Fail if load test failed
+        if: steps.load-test.outcome == 'failure'
+        run: |
+          echo "::error::Load test failed! Check the results above."
+          exit 1

@@ -1,0 +1,56 @@
+# Azure Load Testing 設定ファイル
+# https://learn.microsoft.com/azure/load-testing/reference-test-config-yaml
+
+version: v0.1
+testId: api-load-test-001
+testName: API Load Test
+displayName: "API CRUD Endpoints - Load Test"
+description: "REST API の CRUD エンドポイントに対する段階的負荷テスト"
+
+testPlan: ../jmeter/test-plans/api-load-test.jmx
+
+engineInstances: 1  # PR テストは 1 インスタンス、本番前は 5 に増やす
+
+# テストデータファイル（JMeter の CSV Data Set Config が参照するファイル）
+configurationFiles:
+  - ../jmeter/test-data/users.csv
+  - ../jmeter/test-data/items.csv
+
+# 環境変数（JMeter プロパティとして渡される）
+env:
+  - name: target.host
+    value: "staging-api.example.com"
+  - name: target.port
+    value: "443"
+  - name: target.protocol
+    value: "https"
+
+# フェイルオーバー基準（いずれかの条件に違反するとテスト結果が Fail になる）
+failureCriteria:
+  # P95 レスポンスタイムが 500ms を超えたら Fail
+  - avg(response_time_ms) > 500
+    condition: greater
+    action: stop
+    requestName: "GET /items (List)"
+    value: 500
+    aggregate: p95
+
+  # P95 レスポンスタイムが 500ms を超えたら Fail（全リクエスト）
+  - p95(response_time_ms) > 500
+  # P99 レスポンスタイムが 1000ms を超えたら Fail
+  - p99(response_time_ms) > 1000
+  # エラー率が 1% を超えたら Fail
+  - percentage(error) > 1
+
+# 自動停止設定（テスト中にエラー率が急上昇した場合に自動停止）
+autoStop:
+  errorPercentage: 10    # エラー率 10% で自動停止
+  timeWindow: 30         # 30 秒間のウィンドウで判定
+
+# Key Vault 参照（API キーなどの機密情報を安全に管理）
+# secrets:
+#   - name: API_KEY
+#     value: "https://your-keyvault.vault.azure.net/secrets/api-key"
+
+# サブネット設定（VNet 統合が必要な場合）
+# subnetId: "/subscriptions/{sub-id}/resourceGroups/{rg}/providers/Microsoft.Network/virtualNetworks/{vnet}/subnets/{subnet}"

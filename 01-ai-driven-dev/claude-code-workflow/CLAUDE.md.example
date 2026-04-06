@@ -1,0 +1,74 @@
+# CLAUDE.md Example — Project Rules for Claude Code
+
+# Project Overview
+This is a Next.js 14 + TypeScript monorepo managed with Turborepo.
+
+## Tech Stack
+- Frontend: Next.js 14 (App Router), React 18, TypeScript 5.3
+- Styling: Tailwind CSS v3 + shadcn/ui
+- Backend: tRPC v11, Drizzle ORM, PostgreSQL
+- Testing: Vitest (unit), Playwright (E2E)
+- Package Manager: pnpm 9+
+
+## Architecture Rules
+- All shared code lives in `packages/` — never import from sibling apps directly
+- Use Server Components by default; add "use client" only when interactivity is needed
+- API routes use tRPC routers defined in `packages/api/src/routers/`
+- Database schema changes require a migration file via `pnpm db:migrate`
+
+## Coding Standards
+- Prefer named exports over default exports
+- Use Zod schemas for all external input validation
+- Error handling: use Result<T, E> pattern instead of throwing exceptions
+- File naming: kebab-case for files, PascalCase for components
+- Max file length: 300 lines — split into smaller modules if exceeded
+
+## Git Conventions
+- Branch naming: `feat/`, `fix/`, `chore/`, `docs/` prefixes
+- Commit messages follow Conventional Commits
+- PRs require at least one approval before merge
+- Squash merge to main
+
+## Testing Requirements
+- New features must include unit tests (Vitest)
+- Critical user flows need E2E tests (Playwright)
+- Test files are co-located: `foo.ts` → `foo.test.ts`
+- Run `pnpm test` before committing
+
+## Security
+- Never hardcode API keys or secrets — use environment variables
+- All user inputs must be sanitized before database queries
+- Authentication tokens expire after 24 hours
+
+## Common Commands
+```bash
+pnpm dev          # Start all apps in development mode
+pnpm build        # Build all packages and apps
+pnpm test         # Run unit tests
+pnpm test:e2e     # Run Playwright E2E tests
+pnpm db:migrate   # Run pending database migrations
+pnpm lint         # ESLint + Prettier check
+```
+
+## Directory Structure
+```
+apps/
+  web/           # Main Next.js application
+  admin/         # Admin dashboard
+packages/
+  api/           # tRPC API layer
+  db/            # Drizzle ORM schema & migrations
+  ui/            # Shared UI components (shadcn/ui)
+  config/        # Shared configs (ESLint, TypeScript, Tailwind)
+```
+
+## MCP Servers
+This project uses the following MCP servers:
+- GitHub: For issue/PR management
+- Figma: For design-to-code workflows
+- Slack: For team notifications
+
+## Important Context
+- This project serves ~10k monthly active users
+- Deploy target is Vercel (web) and Cloud Run (API)
+- The `packages/db` schema is the source of truth for data models

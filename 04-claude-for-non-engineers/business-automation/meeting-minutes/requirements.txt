@@ -1,0 +1,7 @@
+# Meeting Minutes Generator Dependencies
+# Production
+anthropic>=0.42.0
+
+# Development
+pytest>=8.0.0
+ruff>=0.8.0

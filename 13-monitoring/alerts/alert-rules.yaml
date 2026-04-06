@@ -1,0 +1,251 @@
+# Datadog Monitor API 準拠のアラートルール定義
+# https://docs.datadoghq.com/api/latest/monitors/#create-a-monitor
+#
+# Why この設計にしたか:
+# - 3段階のセベリティで「誰が・いつ対応するか」を明確にする
+# - 最小評価期間（5分以上）でスパイクによるノイズアラートを防止
+# - Recovery Threshold でフラッピング（発火→解除の繰り返し）を抑制
+# - PagerDuty 連携は Critical のみに限定し、オンコール負荷を最小化
+
+monitors:
+  # ============================================================
+  # Critical Alerts - 即時対応（PagerDuty + Slack）
+  # ============================================================
+
+  - name: "[Critical] Error Rate > 5% - {{service}}"
+    type: metric alert
+    query: >
+      sum(last_5m):
+        sum:trace.http.request.errors{service:my-service}.as_count()
+        / sum:trace.http.request.hits{service:my-service}.as_count()
+        * 100 > 5
+    message: |
+      ## Error Rate が 5% を超えました
+
+      **現在値**: {{value}}%
+      **サービス**: {{service}}
+      **環境**: {{env}}
+
+      ### 対応手順
+      1. Datadog APM でエラートレースを確認
+      2. 直近のデプロイ履歴を確認（ロールバック検討）
+      3. 依存サービスの状態を確認
+
+      @pagerduty-oncall
+      @slack-alerts-critical
+    tags:
+      - service:my-service
+      - severity:critical
+      - team:backend
+    options:
+      thresholds:
+        critical: 5
+        warning: 3
+      threshold_windows:
+        trigger_window: last_5m
+        recovery_window: last_10m
+      notify_no_data: true
+      no_data_timeframe: 10
+      require_full_window: true
+      notify_audit: true
+      renotify_interval: 30
+      escalation_message: |
+        アラートが 30 分以上継続しています。エスカレーションを検討してください。
+        @pagerduty-oncall-escalation
+
+  - name: "[Critical] Latency P99 > 2s - {{service}}"
+    type: metric alert
+    query: >
+      percentile(last_5m):
+        trace.http.request.duration{service:my-service}
+        p:99 > 2000
+    message: |
+      ## レイテンシ P99 が 2 秒を超えました
+
+      **現在値**: {{value}}ms
+      **サービス**: {{service}}
+      **環境**: {{env}}
+
+      ### 対応手順
+      1. APM でスローリクエストのトレースを確認
+      2. DB クエリのパフォーマンスを確認
+      3. 外部 API の応答時間を確認
+      4. リソース（CPU/メモリ）の逼迫を確認
+
+      @pagerduty-oncall
+      @slack-alerts-critical
+    tags:
+      - service:my-service
+      - severity:critical
+      - team:backend
+    options:
+      thresholds:
+        critical: 2000
+        warning: 1500
+      threshold_windows:
+        trigger_window: last_5m
+        recovery_window: last_10m
+      notify_no_data: false
+      require_full_window: true
+      renotify_interval: 30
+
+  # ============================================================
+  # Warning Alerts - 営業時間内対応（Slack のみ）
+  # ============================================================
+
+  - name: "[Warning] Error Rate > 1% - {{service}}"
+    type: metric alert
+    query: >
+      sum(last_10m):
+        sum:trace.http.request.errors{service:my-service}.as_count()
+        / sum:trace.http.request.hits{service:my-service}.as_count()
+        * 100 > 1
+    message: |
+      ## Error Rate が 1% を超えました
+
+      **現在値**: {{value}}%
+      **サービス**: {{service}}
+
+      営業時間内に確認してください。
+      エラーが増加傾向の場合は Critical に昇格する可能性があります。
+
+      @slack-alerts-warning
+    tags:
+      - service:my-service
+      - severity:warning
+      - team:backend
+    options:
+      thresholds:
+        critical: 1
+        warning: 0.5
+      threshold_windows:
+        trigger_window: last_10m
+        recovery_window: last_15m
+      notify_no_data: false
+      require_full_window: true
+      renotify_interval: 120
+
+  - name: "[Warning] Latency P99 > 1s - {{service}}"
+    type: metric alert
+    query: >
+      percentile(last_10m):
+        trace.http.request.duration{service:my-service}
+        p:99 > 1000
+    message: |
+      ## レイテンシ P99 が 1 秒を超えました
+
+      **現在値**: {{value}}ms
+      **サービス**: {{service}}
+
+      パフォーマンス劣化の兆候です。営業時間内に調査してください。
+
+      @slack-alerts-warning
+    tags:
+      - service:my-service
+      - severity:warning
+      - team:backend
+    options:
+      thresholds:
+        critical: 1000
+        warning: 800
+      threshold_windows:
+        trigger_window: last_10m
+        recovery_window: last_15m
+      notify_no_data: false
+      require_full_window: true
+      renotify_interval: 120
+
+  - name: "[Warning] SLO Error Budget Burn Rate High - {{service}}"
+    type: metric alert
+    query: >
+      burn_rate("<<SLO_ID>>").rollup("max", 3600) > 6
+    message: |
+      ## SLO Error Budget のバーンレートが高くなっています
+
+      **バーンレート**: {{value}}x（通常は 1x）
+      **意味**: このペースが 6 時間続くと Error Budget の 5% を消費します
+
+      Error Budget の残量を確認し、必要に応じてリリースフリーズを検討してください。
+
+      @slack-alerts-warning
+    tags:
+      - service:my-service
+      - severity:warning
+      - team:backend
+      - slo:true
+    options:
+      thresholds:
+        critical: 6
+      notify_no_data: false
+      renotify_interval: 60
+
+  # ============================================================
+  # Info Alerts - 参考情報（ダッシュボード + Slack 通知）
+  # ============================================================
+
+  - name: "[Info] Deploy Notification - {{service}}"
+    type: event-v2 alert
+    query: >
+      events("source:deploy service:my-service").rollup("count").by("version").last("5m") > 0
+    message: |
+      ## デプロイが検出されました
+
+      **サービス**: {{service}}
+      **バージョン**: {{version}}
+      **環境**: {{env}}
+
+      デプロイ後 30 分間はエラー率とレイテンシを注視してください。
+
+      @slack-alerts-info
+    tags:
+      - service:my-service
+      - severity:info
+      - team:backend
+    options:
+      notify_no_data: false
+      renotify_interval: 0
+
+  - name: "[Info] High CPU Usage > 80% - {{host}}"
+    type: metric alert
+    query: >
+      avg(last_15m):
+        avg:system.cpu.user{service:my-service} by {host} > 80
+    message: |
+      ## CPU 使用率が 80% を超えています
+
+      **ホスト**: {{host}}
+      **現在値**: {{value}}%
+
+      スケールアウトの検討が必要な可能性があります。
+
+      @slack-alerts-info
+    tags:
+      - service:my-service
+      - severity:info
+      - team:infrastructure
+    options:
+      thresholds:
+        critical: 80
+        warning: 70
+      threshold_windows:
+        trigger_window: last_15m
+        recovery_window: last_15m
+      notify_no_data: false
+      require_full_window: true
+      renotify_interval: 240
+
+# ============================================================
+# エスカレーション戦略
+# ============================================================
+#
+# Level 1 (0min)  : Critical → PagerDuty (on-call engineer) + Slack #alerts-critical
+# Level 2 (30min) : 未 Acknowledge → PagerDuty escalation (tech lead)
+# Level 3 (60min) : 未解決 → Slack #incidents + engineering manager 通知
+#
+# Warning は Slack #alerts-warning のみ。2 時間ごとに再通知。
+# Info は Slack #alerts-info のみ。再通知なし。
+#
+# PagerDuty 連携設定:
+#   - Integration Key は Datadog の PagerDuty Integration で管理
+#   - @pagerduty-oncall → PagerDuty の "On-Call" サービスにルーティング
+#   - @pagerduty-oncall-escalation → Escalation Policy で tech lead に通知

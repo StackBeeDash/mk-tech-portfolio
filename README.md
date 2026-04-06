@@ -24,6 +24,7 @@ This repository demonstrates technical expertise extracted from real-world priva
 | 10 | DB Migration | [`10-db-migration/`](10-db-migration/) | [RLS vs app-layer tenant isolation](../../discussions/40) |
 | 11 | Security | [`11-security/`](11-security/) | [Supabase Auth selection](../../discussions/48) / [RLS strategy](../../discussions/40) |
 | 12 | API Design | [`12-api-design/`](12-api-design/) | [FastAPI vs Hono vs Express](../../discussions/47) |
+| 13 | Monitoring | [`13-monitoring/`](13-monitoring/) | Datadog observability strategy (Metrics/Logs/Traces) |
 
 ## Architecture Decisions
 
@@ -55,6 +56,7 @@ This portfolio emphasizes not just *what* was built, but *why* each decision was
 | Desktop | Tauri (Rust) |
 | Testing | Playwright, Vitest |
 | Design | Figma, Figma MCP |
+| Monitoring | Datadog (APM, Logs, Metrics), DogStatsD, pino |
 | DevOps | GitHub Actions, Docker, Turborepo |
 
 ## Author

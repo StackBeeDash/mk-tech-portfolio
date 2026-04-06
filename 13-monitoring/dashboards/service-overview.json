@@ -1,0 +1,349 @@
+{
+  "title": "Service Overview",
+  "description": "サービスヘルスの概要 - リクエスト数、エラー率、レイテンシ、インフラメトリクス、ビジネスメトリクス",
+  "widgets": [
+    {
+      "id": 1,
+      "definition": {
+        "title": "Request Rate (per second)",
+        "type": "timeseries",
+        "requests": [
+          {
+            "formulas": [
+              {
+                "formula": "per_second(a)"
+              }
+            ],
+            "queries": [
+              {
+                "data_source": "metrics",
+                "name": "a",
+                "query": "sum:trace.http.request.hits{service:my-service} by {resource_name}"
+              }
+            ],
+            "response_format": "timeseries",
+            "style": {
+              "palette": "dog_classic"
+            },
+            "display_type": "bars"
+          }
+        ]
+      },
+      "layout": {
+        "x": 0,
+        "y": 0,
+        "width": 6,
+        "height": 3
+      }
+    },
+    {
+      "id": 2,
+      "definition": {
+        "title": "Error Rate (%)",
+        "type": "timeseries",
+        "requests": [
+          {
+            "formulas": [
+              {
+                "formula": "(a / b) * 100"
+              }
+            ],
+            "queries": [
+              {
+                "data_source": "metrics",
+                "name": "a",
+                "query": "sum:trace.http.request.errors{service:my-service}"
+              },
+              {
+                "data_source": "metrics",
+                "name": "b",
+                "query": "sum:trace.http.request.hits{service:my-service}"
+              }
+            ],
+            "response_format": "timeseries",
+            "style": {
+              "palette": "warm"
+            },
+            "display_type": "line"
+          }
+        ],
+        "markers": [
+          {
+            "value": "y = 1",
+            "display_type": "warning dashed",
+            "label": "Warning: 1%"
+          },
+          {
+            "value": "y = 5",
+            "display_type": "error dashed",
+            "label": "Critical: 5%"
+          }
+        ]
+      },
+      "layout": {
+        "x": 6,
+        "y": 0,
+        "width": 6,
+        "height": 3
+      }
+    },
+    {
+      "id": 3,
+      "definition": {
+        "title": "Latency Distribution (P50 / P95 / P99)",
+        "type": "timeseries",
+        "requests": [
+          {
+            "formulas": [
+              {
+                "formula": "a",
+                "alias": "P50"
+              },
+              {
+                "formula": "b",
+                "alias": "P95"
+              },
+              {
+                "formula": "c",
+                "alias": "P99"
+              }
+            ],
+            "queries": [
+              {
+                "data_source": "metrics",
+                "name": "a",
+                "query": "p50:trace.http.request.duration{service:my-service}"
+              },
+              {
+                "data_source": "metrics",
+                "name": "b",
+                "query": "p95:trace.http.request.duration{service:my-service}"
+              },
+              {
+                "data_source": "metrics",
+                "name": "c",
+                "query": "p99:trace.http.request.duration{service:my-service}"
+              }
+            ],
+            "response_format": "timeseries",
+            "style": {
+              "palette": "cool"
+            },
+            "display_type": "line"
+          }
+        ],
+        "yaxis": {
+          "label": "ms"
+        },
+        "markers": [
+          {
+            "value": "y = 500",
+            "display_type": "warning dashed",
+            "label": "SLO: 500ms"
+          }
+        ]
+      },
+      "layout": {
+        "x": 0,
+        "y": 3,
+        "width": 12,
+        "height": 3
+      }
+    },
+    {
+      "id": 4,
+      "definition": {
+        "title": "Infrastructure - CPU Usage (%)",
+        "type": "timeseries",
+        "requests": [
+          {
+            "queries": [
+              {
+                "data_source": "metrics",
+                "name": "a",
+                "query": "avg:system.cpu.user{service:my-service} by {host}"
+              }
+            ],
+            "response_format": "timeseries",
+            "display_type": "line"
+          }
+        ],
+        "markers": [
+          {
+            "value": "y = 80",
+            "display_type": "warning dashed",
+            "label": "80%"
+          }
+        ]
+      },
+      "layout": {
+        "x": 0,
+        "y": 6,
+        "width": 4,
+        "height": 3
+      }
+    },
+    {
+      "id": 5,
+      "definition": {
+        "title": "Infrastructure - Memory Usage (%)",
+        "type": "timeseries",
+        "requests": [
+          {
+            "queries": [
+              {
+                "data_source": "metrics",
+                "name": "a",
+                "query": "avg:system.mem.pct_usable{service:my-service} by {host}"
+              }
+            ],
+            "response_format": "timeseries",
+            "display_type": "line"
+          }
+        ],
+        "markers": [
+          {
+            "value": "y = 85",
+            "display_type": "warning dashed",
+            "label": "85%"
+          }
+        ]
+      },
+      "layout": {
+        "x": 4,
+        "y": 6,
+        "width": 4,
+        "height": 3
+      }
+    },
+    {
+      "id": 6,
+      "definition": {
+        "title": "Infrastructure - Disk Usage (%)",
+        "type": "timeseries",
+        "requests": [
+          {
+            "queries": [
+              {
+                "data_source": "metrics",
+                "name": "a",
+                "query": "avg:system.disk.in_use{service:my-service} by {host}"
+              }
+            ],
+            "response_format": "timeseries",
+            "display_type": "line"
+          }
+        ],
+        "markers": [
+          {
+            "value": "y = 90",
+            "display_type": "error dashed",
+            "label": "90%"
+          }
+        ]
+      },
+      "layout": {
+        "x": 8,
+        "y": 6,
+        "width": 4,
+        "height": 3
+      }
+    },
+    {
+      "id": 7,
+      "definition": {
+        "title": "Business - Active Users (1min window)",
+        "type": "query_value",
+        "requests": [
+          {
+            "queries": [
+              {
+                "data_source": "metrics",
+                "name": "a",
+                "query": "sum:app.users.active{service:my-service}"
+              }
+            ],
+            "response_format": "scalar"
+          }
+        ],
+        "precision": 0
+      },
+      "layout": {
+        "x": 0,
+        "y": 9,
+        "width": 3,
+        "height": 2
+      }
+    },
+    {
+      "id": 8,
+      "definition": {
+        "title": "Business - API Requests (Today)",
+        "type": "query_value",
+        "requests": [
+          {
+            "queries": [
+              {
+                "data_source": "metrics",
+                "name": "a",
+                "query": "sum:app.api.requests.total{service:my-service}.rollup(sum, 86400)"
+              }
+            ],
+            "response_format": "scalar"
+          }
+        ],
+        "precision": 0
+      },
+      "layout": {
+        "x": 3,
+        "y": 9,
+        "width": 3,
+        "height": 2
+      }
+    },
+    {
+      "id": 9,
+      "definition": {
+        "title": "Business - Orders per Minute",
+        "type": "timeseries",
+        "requests": [
+          {
+            "queries": [
+              {
+                "data_source": "metrics",
+                "name": "a",
+                "query": "sum:app.orders.completed{service:my-service}.rollup(sum, 60)"
+              }
+            ],
+            "response_format": "timeseries",
+            "display_type": "bars",
+            "style": {
+              "palette": "purple"
+            }
+          }
+        ]
+      },
+      "layout": {
+        "x": 6,
+        "y": 9,
+        "width": 6,
+        "height": 2
+      }
+    }
+  ],
+  "template_variables": [
+    {
+      "name": "service",
+      "prefix": "service",
+      "default": "my-service"
+    },
+    {
+      "name": "env",
+      "prefix": "env",
+      "default": "production"
+    }
+  ],
+  "layout_type": "ordered",
+  "notify_list": [],
+  "reflow_type": "fixed"
+}

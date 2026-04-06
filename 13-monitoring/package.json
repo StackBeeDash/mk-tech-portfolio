@@ -1,0 +1,20 @@
+{
+  "name": "13-monitoring",
+  "version": "1.0.0",
+  "description": "Datadog observability strategy - APM, custom metrics, structured logging",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dd-trace": "^5.0.0",
+    "hot-shots": "^10.0.0",
+    "pino": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.5.0"
+  }
+}

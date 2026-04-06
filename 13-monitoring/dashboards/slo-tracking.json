@@ -1,0 +1,252 @@
+{
+  "title": "SLO Tracking",
+  "description": "SLI/SLO の追跡 - Error Budget 消費率、バーンレートアラート",
+  "widgets": [
+    {
+      "id": 1,
+      "definition": {
+        "title": "Availability SLO (Target: 99.9%)",
+        "type": "slo",
+        "slo_id": "<<AVAILABILITY_SLO_ID>>",
+        "show_error_budget": true,
+        "view_type": "detail",
+        "time_windows": ["30d", "7d", "previous_week"],
+        "view_mode": "overall"
+      },
+      "layout": {
+        "x": 0,
+        "y": 0,
+        "width": 12,
+        "height": 4
+      }
+    },
+    {
+      "id": 2,
+      "definition": {
+        "title": "Latency SLO - P99 < 500ms (Target: 99.5%)",
+        "type": "slo",
+        "slo_id": "<<LATENCY_SLO_ID>>",
+        "show_error_budget": true,
+        "view_type": "detail",
+        "time_windows": ["30d", "7d", "previous_week"],
+        "view_mode": "overall"
+      },
+      "layout": {
+        "x": 0,
+        "y": 4,
+        "width": 12,
+        "height": 4
+      }
+    },
+    {
+      "id": 3,
+      "definition": {
+        "title": "Error Budget Remaining (Availability - 30d)",
+        "type": "timeseries",
+        "requests": [
+          {
+            "formulas": [
+              {
+                "formula": "100 - ((a / b) * 100 / 0.1) * 100",
+                "alias": "Error Budget Remaining (%)"
+              }
+            ],
+            "queries": [
+              {
+                "data_source": "metrics",
+                "name": "a",
+                "query": "sum:trace.http.request.errors{service:my-service}.rollup(sum, 86400)"
+              },
+              {
+                "data_source": "metrics",
+                "name": "b",
+                "query": "sum:trace.http.request.hits{service:my-service}.rollup(sum, 86400)"
+              }
+            ],
+            "response_format": "timeseries",
+            "display_type": "line",
+            "style": {
+              "palette": "green"
+            }
+          }
+        ],
+        "markers": [
+          {
+            "value": "y = 50",
+            "display_type": "warning dashed",
+            "label": "50% consumed"
+          },
+          {
+            "value": "y = 25",
+            "display_type": "error dashed",
+            "label": "75% consumed"
+          }
+        ]
+      },
+      "layout": {
+        "x": 0,
+        "y": 8,
+        "width": 6,
+        "height": 3
+      }
+    },
+    {
+      "id": 4,
+      "definition": {
+        "title": "Error Budget Burn Rate (1h window)",
+        "type": "timeseries",
+        "requests": [
+          {
+            "formulas": [
+              {
+                "formula": "(a / b) / (0.001 / 720)",
+                "alias": "Burn Rate"
+              }
+            ],
+            "queries": [
+              {
+                "data_source": "metrics",
+                "name": "a",
+                "query": "sum:trace.http.request.errors{service:my-service}.rollup(sum, 3600)"
+              },
+              {
+                "data_source": "metrics",
+                "name": "b",
+                "query": "sum:trace.http.request.hits{service:my-service}.rollup(sum, 3600)"
+              }
+            ],
+            "response_format": "timeseries",
+            "display_type": "line",
+            "style": {
+              "palette": "orange"
+            }
+          }
+        ],
+        "markers": [
+          {
+            "value": "y = 1",
+            "display_type": "ok dashed",
+            "label": "Normal (1x)"
+          },
+          {
+            "value": "y = 14.4",
+            "display_type": "error dashed",
+            "label": "Critical: 2% budget in 1h (14.4x)"
+          },
+          {
+            "value": "y = 6",
+            "display_type": "warning dashed",
+            "label": "Warning: 5% budget in 6h (6x)"
+          }
+        ]
+      },
+      "layout": {
+        "x": 6,
+        "y": 8,
+        "width": 6,
+        "height": 3
+      }
+    },
+    {
+      "id": 5,
+      "definition": {
+        "title": "Latency P99 vs SLO Threshold",
+        "type": "timeseries",
+        "requests": [
+          {
+            "formulas": [
+              {
+                "formula": "a",
+                "alias": "P99 Latency (ms)"
+              }
+            ],
+            "queries": [
+              {
+                "data_source": "metrics",
+                "name": "a",
+                "query": "p99:trace.http.request.duration{service:my-service}"
+              }
+            ],
+            "response_format": "timeseries",
+            "display_type": "line"
+          }
+        ],
+        "markers": [
+          {
+            "value": "y = 500",
+            "display_type": "error dashed",
+            "label": "SLO Threshold: 500ms"
+          }
+        ]
+      },
+      "layout": {
+        "x": 0,
+        "y": 11,
+        "width": 12,
+        "height": 3
+      }
+    },
+    {
+      "id": 6,
+      "definition": {
+        "title": "Error Rate vs SLO Threshold",
+        "type": "timeseries",
+        "requests": [
+          {
+            "formulas": [
+              {
+                "formula": "(a / b) * 100",
+                "alias": "Error Rate (%)"
+              }
+            ],
+            "queries": [
+              {
+                "data_source": "metrics",
+                "name": "a",
+                "query": "sum:trace.http.request.errors{service:my-service}"
+              },
+              {
+                "data_source": "metrics",
+                "name": "b",
+                "query": "sum:trace.http.request.hits{service:my-service}"
+              }
+            ],
+            "response_format": "timeseries",
+            "display_type": "line",
+            "style": {
+              "palette": "warm"
+            }
+          }
+        ],
+        "markers": [
+          {
+            "value": "y = 0.1",
+            "display_type": "error dashed",
+            "label": "SLO Threshold: 0.1%"
+          }
+        ]
+      },
+      "layout": {
+        "x": 0,
+        "y": 14,
+        "width": 12,
+        "height": 3
+      }
+    }
+  ],
+  "template_variables": [
+    {
+      "name": "service",
+      "prefix": "service",
+      "default": "my-service"
+    },
+    {
+      "name": "env",
+      "prefix": "env",
+      "default": "production"
+    }
+  ],
+  "layout_type": "ordered",
+  "notify_list": [],
+  "reflow_type": "fixed"
+}

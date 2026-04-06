@@ -24,7 +24,8 @@ This repository demonstrates technical expertise extracted from real-world priva
 | 10 | DB Migration | [`10-db-migration/`](10-db-migration/) | [RLS vs app-layer tenant isolation](../../discussions/40) |
 | 11 | Security | [`11-security/`](11-security/) | [Supabase Auth selection](../../discussions/48) / [RLS strategy](../../discussions/40) |
 | 12 | API Design | [`12-api-design/`](12-api-design/) | [FastAPI vs Hono vs Express](../../discussions/47) |
-| 13 | Monitoring | [`13-monitoring/`](13-monitoring/) | Datadog observability strategy (Metrics/Logs/Traces) |
+| 13 | Monitoring | [`13-monitoring/`](13-monitoring/) | [Datadog over Grafana + Prometheus](../../discussions/50) |
+| 14 | Load Testing | [`14-load-testing/`](14-load-testing/) | [Azure Load Testing + JMeter vs k6](../../discussions/51) |
 
 ## Architecture Decisions
 
@@ -44,6 +45,8 @@ This portfolio emphasizes not just *what* was built, but *why* each decision was
 | [ADR-010](../../discussions/47) | Framework selection per context (FastAPI / Hono) | 12 API |
 | [ADR-011](../../discussions/48) | Supabase Auth over Auth0 / self-hosted | 11 Security |
 | [ADR-012](../../discussions/49) | Phased AI rollout for non-engineers | 04 Claude |
+| [ADR-013](../../discussions/50) | Datadog over Grafana + Prometheus / CloudWatch | 13 Monitoring |
+| [ADR-014](../../discussions/51) | Azure Load Testing + JMeter with k6 supplement | 14 Load Testing |
 
 ## Tech Stack
 
@@ -54,7 +57,8 @@ This portfolio emphasizes not just *what* was built, but *why* each decision was
 | Backend | FastAPI, Python, Node.js |
 | Cloud | GCP (Cloud Run Jobs, Cloud Storage), Supabase |
 | Desktop | Tauri (Rust) |
-| Testing | Playwright, Vitest |
+| Testing | Playwright, Vitest, JMeter, k6 |
+| Load Testing | Azure Load Testing, JMeter, k6 |
 | Design | Figma, Figma MCP |
 | Monitoring | Datadog (APM, Logs, Metrics), DogStatsD, pino |
 | DevOps | GitHub Actions, Docker, Turborepo |
